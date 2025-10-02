@@ -1,0 +1,481 @@
+basePath: /
+definitions:
+  model.AuthReq:
+    properties:
+      email:
+        type: string
+      ip_address:
+        type: string
+      password:
+        maxLength: 128
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  model.CreateUserRequest:
+    properties:
+      email:
+        maxLength: 100
+        type: string
+      fullname:
+        maxLength: 255
+        type: string
+      password:
+        maxLength: 128
+        minLength: 6
+        type: string
+      role_id:
+        type: integer
+      username:
+        maxLength: 100
+        minLength: 3
+        type: string
+    required:
+    - email
+    - fullname
+    - password
+    - role_id
+    - username
+    type: object
+  model.JsonResponsError:
+    properties:
+      developer_message: {}
+      error_code: {}
+      error_message: {}
+      request_id:
+        type: string
+      status_code:
+        type: integer
+    type: object
+  model.JsonResponse:
+    properties:
+      data: {}
+      messages:
+        type: string
+      request_id:
+        type: string
+      status_code:
+        type: integer
+    type: object
+  model.JsonResponseTotal:
+    properties:
+      data: {}
+      messages:
+        type: string
+      request_id:
+        type: string
+      status_code:
+        type: integer
+      total:
+        type: integer
+    type: object
+  model.RefreshTokenReq:
+    properties:
+      at:
+        type: string
+      rt:
+        type: string
+    type: object
+  model.TokenOutput:
+    properties:
+      a:
+        type: string
+      b:
+        type: string
+      e:
+        type: string
+      enable_2fa:
+        type: boolean
+      r:
+        type: string
+      require_two_factor:
+        type: boolean
+      user_id:
+        type: integer
+    type: object
+  model.UpdateUserRequest:
+    properties:
+      email:
+        maxLength: 100
+        type: string
+      fullname:
+        maxLength: 255
+        type: string
+      password:
+        maxLength: 128
+        minLength: 6
+        type: string
+      role_id:
+        type: integer
+      username:
+        maxLength: 100
+        minLength: 3
+        type: string
+    type: object
+  model.User:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      email:
+        type: string
+      fullname:
+        type: string
+      id:
+        type: integer
+      password:
+        type: string
+      role_id:
+        type: integer
+      session_version:
+        type: integer
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for You By Peter Shaan with PASETO authentication
+  title: Go Auth Clean Arch API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: API to authenticate user and generate paseto token
+      parameters:
+      - description: Authentication request
+        in: body
+        name: auth
+        required: true
+        schema:
+          $ref: '#/definitions/model.AuthReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Authentication response with paseto token
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.JsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.TokenOutput'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "500":
+          description: Internal error
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+      summary: Login
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: API to logout user and invalidate all user sessions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.JsonResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "500":
+          description: Internal error
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+      security:
+      - BearerAuth: []
+      summary: Logout
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: API to refresh paseto token
+      parameters:
+      - description: Refresh token request
+        in: body
+        name: refresh
+        required: true
+        schema:
+          $ref: '#/definitions/model.RefreshTokenReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: New access token
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.JsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.TokenOutput'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "401":
+          description: Invalid refresh token
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "500":
+          description: Internal error
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+      summary: Refresh Token
+      tags:
+      - Auth
+  /user:
+    get:
+      consumes:
+      - application/json
+      description: API to get paginated list of users with optional search
+      parameters:
+      - default: 1
+        description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 'Page size (default: 10, max: 100)'
+        in: query
+        name: size
+        type: integer
+      - description: Search by name, email, role, or department
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of users with pagination
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.JsonResponseTotal'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.User'
+                  type: array
+              type: object
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "401":
+          description: Unauthorized - Invalid or missing token
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "403":
+          description: Forbidden - Insufficient permissions
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "500":
+          description: Internal server error - Database or system error
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+      security:
+      - BearerAuth: []
+      summary: List User
+      tags:
+      - User
+    post:
+      consumes:
+      - application/json
+      description: API to create a new user
+      parameters:
+      - description: Authentication request
+        in: body
+        name: auth
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User registered successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.JsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.User'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "500":
+          description: Internal error
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+      summary: Create User
+      tags:
+      - User
+  /user/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete user (mark as deleted)
+      parameters:
+      - description: User ID to delete
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.JsonResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Invalid user ID format
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+      security:
+      - BearerAuth: []
+      summary: Delete User
+      tags:
+      - User
+    get:
+      consumes:
+      - application/json
+      description: Get detailed user information by ID
+      parameters:
+      - description: User ID
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User details retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.JsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.User'
+              type: object
+        "400":
+          description: Invalid user ID format
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+      security:
+      - BearerAuth: []
+      summary: Get User by ID
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      description: Update existing user information
+      parameters:
+      - description: User ID
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: User update data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User updated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.JsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.User'
+              type: object
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.JsonResponsError'
+      security:
+      - BearerAuth: []
+      summary: Update User
+      tags:
+      - User
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and PASETO token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

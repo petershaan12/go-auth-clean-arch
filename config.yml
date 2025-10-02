@@ -1,0 +1,16 @@
+env: development
+port: 8080
+fileServerPort: 8081
+database:
+  host: localhost
+  database: go_auth_clean_arch # Change to your database name
+  port: 3306
+  username: root
+  password: Indonesia77 # Change to your database password
+  maxIdleConns: 5
+  maxOpenConns: 20
+  maxConnLifetime: 300
+paseto:
+  key: "this is a 32-byte key for Paseto" # Ensure this is 32 bytes long for V2 Paseto
+  accessTokenExpiry: "15m"
+  refreshTokenExpiry: "7d"
